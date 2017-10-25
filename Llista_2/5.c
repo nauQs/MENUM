@@ -18,16 +18,18 @@ void printmatrix(double** A){
 
 int main(void)
 {
-    double **A, **LDLt, suma;
+    double **A, **L, **D, suma;
     int i, j, k;
     tolerancia = 1.e-14;
     /*Llegim A*/
     printf("Escriu l'enter n:");
     scanf("%d", &n);
-    LDLt = (double **)malloc(n*sizeof(double*));
+    L = (double **)malloc(n*sizeof(double*));
+    D = (double **)malloc(n*sizeof(double*));
     A = (double **)malloc(n*sizeof(double*));
     for(i=0;i<n;i++){
-        LDLt[i] = (double *)malloc(n*sizeof(double));
+        L[i] = (double *)malloc(n*sizeof(double));
+        D[i] = (double *)malloc(n*sizeof(double));
         A[i] = (double *)malloc(n*sizeof(double));
         for(j=0;j<n;j++){
         printf("Escriu A%d%d:",i,j);
@@ -35,37 +37,42 @@ int main(void)
         }
     }
     
-    LDLt[0][0] = A[0][0];
+    D[0][0] = A[0][0];
     for(i=1;i<n;i++){
-        LDLt[i][1] = A[i][1]/A[0][0];
+        L[i][1] = A[i][1]/D[0][0];
+        printf("%le",L[i][1]);
     }
+    
     for(j=1;j<n-1;j++){
         suma= 0.;
         for(k=0;k<j-1;k++){
-            suma += LDLt[j][k]*LDLt[j][k]*LDT[k][k];
+            suma += L[j][k]*L[j][k]*D[k][k];
         }
-        LDTL[j][j]= A[j]A[j] - suma;
+        D[j][j]= A[j][j] - suma;
         
         for(i=j;i<n;i++){
             suma= 0.;
             for(k=0;k<j-1;k++){
-                suma += LDLt[i][k]*LDLt[k][k]*LDLt[j][k];
+                suma += L[i][k]*D[k][k]*L[j][k];
             }
-            LDLt = (A[i][j]-suma)/LDLt[j][j];
+            L[i][j] = (A[i][j]-suma)/D[j][j];
+        }
     }
+    
     suma= 0.;
     for(k=0;k<n-1;k++){
-        suma+= LDLt[n][k]*LDLt[n][k]*LDLt[k][k]
+        suma+= L[n-1][k]*L[n-1][k]*D[k][k];
     }
-    LDLt[n-1][n-1] = A[n-1][n-1] - suma;
+    D[n-1][n-1] = A[n-1][n-1] - suma;
     
     printmatrix(A);
-    printmatrix(LDLt);
+    printmatrix(L);
+    printmatrix(D);
 
     for (i=0; i<n; i++) free(A[i]);
     free(A);
-    for (i=0; i<n; i++) free(LDLt[i]);
-    free(LDLt);
+    for (i=0; i<n; i++) free(L[i]);
+    free(L);
 
     
     return 0;
