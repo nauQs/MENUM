@@ -37,7 +37,7 @@ int main(void)
     
     LDL[0][0] = A[0][0];
     for(i=1;i<n;i++){
-        LDL[i][0] = A[i][1]/LDL[0][0];
+        LDL[i][0] = A[i][0]/LDL[0][0];
     }
     
     for(j=1;j<n-1;j++){
