@@ -18,18 +18,16 @@ void printmatrix(double** A){
 
 int main(void)
 {
-    double **A, **L, **D, suma;
+    double **A, **LDL, suma;
     int i, j, k;
     tolerancia = 1.e-14;
     /*Llegim A*/
     printf("Escriu l'enter n:");
     scanf("%d", &n);
-    L = (double **)malloc(n*sizeof(double*));
-    D = (double **)malloc(n*sizeof(double*));
+    LDL = (double **)malloc(n*sizeof(double*));
     A = (double **)malloc(n*sizeof(double*));
     for(i=0;i<n;i++){
-        L[i] = (double *)malloc(n*sizeof(double));
-        D[i] = (double *)malloc(n*sizeof(double));
+        LDL[i] = (double *)malloc(n*sizeof(double));
         A[i] = (double *)malloc(n*sizeof(double));
         for(j=0;j<n;j++){
         printf("Escriu A%d%d:",i,j);
@@ -37,42 +35,40 @@ int main(void)
         }
     }
     
-    D[0][0] = A[0][0];
+    LDL[0][0] = A[0][0];
     for(i=1;i<n;i++){
-        L[i][1] = A[i][1]/D[0][0];
-        printf("%le",L[i][1]);
+        LDL[i][0] = A[i][1]/LDL[0][0];
     }
     
     for(j=1;j<n-1;j++){
         suma= 0.;
         for(k=0;k<j-1;k++){
-            suma += L[j][k]*L[j][k]*D[k][k];
+            suma += LDL[j][k]*LDL[j][k]*LDL[k][k];
         }
-        D[j][j]= A[j][j] - suma;
-        
+        LDL[j][j]= A[j][j] - suma;
         for(i=j;i<n;i++){
             suma= 0.;
             for(k=0;k<j-1;k++){
-                suma += L[i][k]*D[k][k]*L[j][k];
+                suma += LDL[i][k]*LDL[k][k]*LDL[j][k];
             }
-            L[i][j] = (A[i][j]-suma)/D[j][j];
+            LDL[i][j] = (A[i][j]-suma)/LDL[j][j];
         }
     }
-    
+
     suma= 0.;
     for(k=0;k<n-1;k++){
-        suma+= L[n-1][k]*L[n-1][k]*D[k][k];
+        suma+= LDL[n-1][k]*LDL[n-1][k]*LDL[k][k];
     }
-    D[n-1][n-1] = A[n-1][n-1] - suma;
+    LDL[n-1][n-1] = A[n-1][n-1] - suma;
+    
     
     printmatrix(A);
-    printmatrix(L);
-    printmatrix(D);
+    printmatrix(LDL);
 
     for (i=0; i<n; i++) free(A[i]);
     free(A);
-    for (i=0; i<n; i++) free(L[i]);
-    free(L);
+    for (i=0; i<n; i++) free(LDL[i]);
+    free(LDL);
 
     
     return 0;
