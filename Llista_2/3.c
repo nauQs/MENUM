@@ -67,7 +67,7 @@ int main(void)
     }else{
     printf("Matriu triangulada amb m a sota la diagonal inferior:\n");
     printmatrix(A);
-    printf("A=LU\nL=\n");
+    printf("A=LU\nL:\n");
     for(i=0;i<n;i++){
         for(j=0;j<n;j++){
             if(j<i) printf("%+1.3e   ", A[i][j]);
@@ -76,7 +76,7 @@ int main(void)
         }
         printf("\n");
     }
-    printf("U=\n");
+    printf("U:\n");
     for(i=0;i<n;i++){
         for(j=0;j<n;j++){
             if(j<i) printf("%+1.3e   ", 0.);
@@ -102,16 +102,16 @@ int main(void)
             }
         }
     }
-    
+    printf("Comprovacio L*U:\n");
     for (i=0; i<n; i++) { 
         for (j=0; j<n; j++) {
+            A[i][j]=0;
             for (k=0; k<n; k++){
                 A[i][j] += L[i][k]*U[k][j];
             }
         }
     }
-    printmatrix(L);
-    printmatrix(U);
+
     printmatrix(A);
     
     
