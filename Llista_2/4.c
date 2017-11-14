@@ -9,7 +9,7 @@
 #define alfa 1.e0
 #define beta 2.e0
 double funp(double x) { return -2/x; }
-double funx(double x) { return -2/(x*x); }
+double funq(double x) { return 2/(x*x); }
 double funr(double x) {return sin(log(x))/(x*x);}
 
 double funy(double x){
@@ -20,7 +20,7 @@ double funy(double x){
     return y;
 }
 
-void tridiagonal(double *s,double *D,double *S,double *x,int n){
+int tridiagonal(double *s,double *D,double *S,double *x,int n){
     /*
     s = s
     D = D 
@@ -46,6 +46,7 @@ void tridiagonal(double *s,double *D,double *S,double *x,int n){
         } 
         x[i] = (x[i]-x[i+1]*S[i]) / D[i];
     }
+    return 0;
 
 }
 
@@ -65,14 +66,15 @@ int main(void){
     h = (b-a)/(n+1);
     
     for(i=0;i<n;i++){
-        D[i] = 2+h*h*funx(a + (i+1)*h);
+        D[i] = 2+h*h*funq(a + (i+1)*h);
+        printf("x%d = %le\n", i, a + (i+1)*h);
     }
     
-    x[0] = -h*h*funr(a+h) * (1+h*funp(a+h)/2)*alfa;
+    x[0] = -h*h*funr(a+h) + (1+h*funp(a+h)/2)*alfa;
     for(i=1;i<n-1;i++){
         x[i] = -h*h*funr(a + (i+1)*h);
     }
-    x[n-1] = -h*h*funr(a+n*h)* (1-h*funp(a+n*h)/2)*beta;
+    x[n-1] = -h*h*funr(a+n*h) + (1-h*funp(a+n*h)/2)*beta;
         
     for(i=0;i<n-1;i++){
         s[i] = -1 - (h/2.0)*funp(a+(i+2)*h);
