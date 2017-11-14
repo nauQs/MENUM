@@ -1,64 +1,96 @@
-/*
-*/
-
 #include<stdio.h>    
 #include<stdlib.h>  
 #include <time.h>  
 #include <math.h>
 
-int main(void){
-    double *diagonal,*superdiagonal,*subdiagonal,*b;
-    int n, i;
+#define tol 1.e-14
+#define a 1.e0
+#define b 2.e0
+#define alfa 1.e0
+#define beta 2.e0
+double funp(double x) { return -2/x; }
+double funx(double x) { return -2/(x*x); }
+double funr(double x) {return sin(log(x))/(x*x);}
+
+double funy(double x){
+    double c1, c2, y;
+    c2 = (8-12*sin(log(2.))-4*cos(log(2.)))/70;
+    c1 = 1.1-c2;
+    y = c1*x+c2/(x*x)-0.3*sin(log(x))-0.1*cos(log(x));
+    return y;
+}
+
+void tridiagonal(double *s,double *D,double *S,double *x,int n){
+    /*
+    s = s
+    D = D 
+    S = S  
+    x = Vector de termes independents - es substituirà per la solució del sistema triD
+    n = mida de la matriu
+    */
+    int i;
+    double m;
+    for(i=1;i<n;i++){
+        if(D[i-1] < tol){
+            return 1;
+        }
+        m = (s[i-1]/  D[i-1]);
+        D[i] = D[i] - ( S[i-1] * m );
+        x[i] = x[i] - ( x[i-1] * m);
+    }
     
-    printf("Digues n: ");
+    x[n-1] = x[n-1]/D[n-1];
+    for(i = n-2; i >=0 ; i--){
+        if(D[i] < tol){
+            return 2;
+        } 
+        x[i] = (x[i]-x[i+1]*S[i]) / D[i];
+    }
+
+}
+
+
+
+int main(void){
+    double *s, *D, *S, *x, h;
+    int i, n;
+    printf("Digues la mida de la matriu triD: \n");
     scanf("%d",&n);
     
-    diagonal = (double*)malloc(n*sizeof(double));
-    superdiagonal = (double*)malloc((n-1)*sizeof(double));
-    subdiagonal = (double*)malloc((n-1)*sizeof(double));
-    b = (double*)malloc(n*sizeof(double));
-
+    s = (double *)malloc((n-1)*sizeof(double));
+    D = (double *)malloc(n*sizeof(double));
+    S = (double *)malloc((n-1)*sizeof(double));
+    x = (double *)malloc(n*sizeof(double));
+    
+    h = (b-a)/(n+1);
     
     for(i=0;i<n;i++){
-        printf("Escriu l'element %d de b :",i+1);
-        scanf("%le", &b[i]);
-    }
-    for(i=0;i<n;i++){
-        printf("Escriu l'element %d de diagonal :",i+1);
-        scanf("%le", &diagonal[i]);
-    }
-    for(i=0;i<n-1;i++){
-        printf("Escriu l'element %d de superdiagonal :",i+1);
-        scanf("%le", &superdiagonal[i]);
-    }
-    for(i=0;i<n-1;i++){
-        printf("Escriu l'element %d de subdiagonal :",i+1);
-        scanf("%le", &subdiagonal[i]);
+        D[i] = 2+h*h*funx(a + (i+1)*h);
     }
     
-    superdiagonal[0]= superdiagonal[0]/diagonal[0];
+    x[0] = -h*h*funr(a+h) * (1+h*funp(a+h)/2)*alfa;
     for(i=1;i<n-1;i++){
-        superdiagonal[i]= superdiagonal[i]/ (diagonal[i] - superdiagonal[i-1]*subdiagonal[i-1]);
+        x[i] = -h*h*funr(a + (i+1)*h);
+    }
+    x[n-1] = -h*h*funr(a+n*h)* (1-h*funp(a+n*h)/2)*beta;
+        
+    for(i=0;i<n-1;i++){
+        s[i] = -1 - (h/2.0)*funp(a+(i+2)*h);
     }
     
-    b[0]=b[0]/diagonal[0];
-    for(i=1;i<n;i++){
-        b[i]= (b[i]-b[i-1]*subdiagonal[i-1])/(diagonal[i] - superdiagonal[i-1]*subdiagonal[i-1]);
+    for(i=0;i<n-1;i++){
+        S[i] = -1 + (h/2.0)*funp(a+(i+1)*h);
     }
     
-    for(i=n-2;i>=0;i--){
-        printf("b[%d]: %le \n",i,b[i]);
-        b[i]=b[i]-superdiagonal[i]*b[i+1];
-    }
     
+    tridiagonal(s,D,S,x,n);
+    
+    printf("Solucio: \n");
     for(i=0;i<n;i++){
-        printf("x%d: %le \n",i,b[i]);
+        printf("x[%d] = %le\n", i, x[i]);
     }
-    
-    free(superdiagonal);
-    free(diagonal);
-    free(subdiagonal);
-    free(b);
+
     
     return 0;
 }
+
