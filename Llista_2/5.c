@@ -1,75 +1,133 @@
- #include<stdio.h>    
-#include<stdlib.h>  
-#include <time.h>  
-#include<math.h>
+/* sobredet.c
+resolució d'un sistema lineal sobredeterminat m x n (m >= n)
+Mètode:
+equacions normals + factoritzacio LDLt + resolució 3 sistemes fàcils
+Al final, es calcula el vector residu i la seva norma-2
+*/
+#include <stdio.h>
+#include <math.h>
 
-int n;
-double tolerancia;
-void printmatrix(double** A){
-    int i,j;
-    for(i=0;i<n;i++){
-        for(j=0;j<n;j++){
-            printf("%+1.4f       ", A[i][j]);
-        }
-        printf("\n");
-    }
-     printf("\n");
-}
+#define N 100        /* dimensió màxima permesa */
+#define tol 1.e-12   /* tolerància límit per a la factorització */
+
+void equnor(int m, int n, double a[][N], double b[], double mat[][N], double vec[]);
+int ldlt(int n, double mat[][N]);
 
 int main(void)
 {
-    double **A, **LDL, suma;
-    int i, j, k;
-    tolerancia = 1.e-14;
-    /*Llegim A*/
-    printf("Escriu l'enter n:");
-    scanf("%d", &n);
-    LDL = (double **)malloc(n*sizeof(double*));
-    A = (double **)malloc(n*sizeof(double*));
-    for(i=0;i<n;i++){
-        LDL[i] = (double *)malloc(n*sizeof(double));
-        A[i] = (double *)malloc(n*sizeof(double));
-        for(j=0;j<n;j++){
-        printf("Escriu A%d%d:",i,j);
-        scanf("%le", &A[i][j]);
-        }
-    }
-    
-    LDL[0][0] = A[0][0];
-    for(i=1;i<n;i++){
-        LDL[i][0] = A[i][0]/LDL[0][0];
-    }
-    
-    for(j=1;j<n-1;j++){
-        suma= 0.;
-        for(k=0;k<j-1;k++){
-            suma += LDL[j][k]*LDL[j][k]*LDL[k][k];
-        }
-        LDL[j][j]= A[j][j] - suma;
-        for(i=j;i<n;i++){
-            suma= 0.;
-            for(k=0;k<j-1;k++){
-                suma += LDL[i][k]*LDL[k][k]*LDL[j][k];
-            }
-            LDL[i][j] = (A[i][j]-suma)/LDL[j][j];
-        }
-    }
+   int m, n, i, j, index;
+   double a[N][N], b[N], mat[N][N], vec[N], aux, res;
+   
+   /* dades */
+   scanf("%d %d", &m, &n);
+   if (m>N || n>N || n>m) {
+      printf("dimensions incorrectes\n");
+      return 1;
+   }
+   for (i=0; i<m; i++) {
+      for (j=0; j<n; j++) scanf("%le", &a[i][j]);
+   }
+   for (i=0; i<m; i++) scanf("%le", &b[i]);
+   
+   /* equacions normals */
+   equnor(m, n, a, b, mat, vec);
+   
+   /* factoritzacio LDLt */
+   index = ldlt(n, mat);
+   if ( index!=0 ) return -1;
+   
+   /* resolució sistema L */
+   for (i=0; i<n; i++) {
+      for (j=0; j<i; j++) 
+            vec[i] = vec[i]-mat[i][j]*vec[j];
+   }
+   /* resolució sistema D */
+   for (i=0; i<n; i++) vec[i] = vec[i]/mat[i][i];
+   
+   /* resolució sistema Lt */
+   for (i=n-1; i>=0; i--) {
+      for (j=i+1; j<n; j++) 
+            vec[i] = vec[i]-mat[i][j]*vec[j];
+   }
+   
+   /* escriptura resultats */ 
+   printf("solucio per minim-quadrats \n");
+   for (i=0; i<n; i++) printf(" i = %d xi = %+.12le \n", i, vec[i]);
+   printf("\n");
+   
+   /* residu */
+   printf("vector residu \n");
+   res = 0;
+   for (i=0; i<m; i++) {
+      aux = b[i];
+      for (j=0; j<n; j++) aux = aux-a[i][j]*vec[j];
+      printf(" i = %2d ri = %+le \n", i, aux);
+      res = res + aux*aux;
+   }
+   res = sqrt(res);
+   printf("norma 2 del residu = %+le \n", res);
+   printf("\n");
 
-    suma= 0.;
-    for(k=0;k<n-1;k++){
-        suma+= LDL[n-1][k]*LDL[n-1][k]*LDL[k][k];
-    }
-    LDL[n-1][n-1] = A[n-1][n-1] - suma;
-    
-    
-    printmatrix(A);
-    printmatrix(LDL);
+   return 0;
+}
 
-    for (i=0; i<n; i++) free(A[i]);
-    free(A);
-    for (i=0; i<n; i++) free(LDL[i]);
-    free(LDL);
+/* equacions normals */
+void equnor(int m, int n, double a[][N], double b[], double mat[][N], double vec[])
+{
+   int i, j, k;
+   
+   for (i=0; i<n; i++) {
+      for (j=0; j<n; j++) {
+         mat[i][j] = 0;
+         for (k=0; k<m; k++) mat[i][j] = mat[i][j]+a[k][i]*a[k][j];
+      }
+      vec[i] = 0;
+      for (k=0; k<m; k++) vec[i] = vec[i]+a[k][i]*b[k];
+   }
+   /* escriptura equacions normals (opcional) */
+   printf("equacions normals \n");
+   for (i=0; i<n; i++) {
+      for (j=0; j<n; j++) printf(" %+le ", mat[i][j]);
+      printf(" | %+le \n", vec[i]);
+   }
+   printf("\n");
+   /* */
+   return;
+}
 
-    
-    return 0;
+/* factorització LDLt */
+int ldlt(int n, double mat[][N])
+{
+   int i, j, k;
+   
+   /* fórmules recurrents per als elements de la diagonal i els de sota */
+   for (j=0; j<n; j++) {
+      for (k=0; k<j; k++) {
+         mat[j][j] = mat[j][j]-mat[j][k]*mat[j][k]*mat[k][k];
+      }
+      if (fabs(mat[j][j])<tol) {
+         printf("no es pot factoritzar, per j=%d es m_jj = %le\n", j, mat[j][j]);
+         return -1;
+      }
+      for (i=j+1; i<n; i++) {
+         for (k=0; k<j; k++) {
+            mat[i][j] =  mat[i][j]-mat[i][k]*mat[j][k]*mat[k][k];
+         }
+         mat[i][j] = mat[i][j]/mat[j][j];
+      }
+   }
+   /* elements de sobre de la diagonal: simetria */
+   for (i=0; i<n-1; i++) {
+      for (k=i+1; k<n; k++) mat[i][k] = mat[k][i];
+   }
+
+   /* escriptura factorització (opcional) */
+   printf("factoritzacio \n");
+   for (i=0; i<n; i++) {
+      for (j=0; j<n; j++) printf(" %+le ", mat[i][j]);
+      printf(" \n");
+   }
+   printf("\n");
+   /* */
+   return 0;
 }
